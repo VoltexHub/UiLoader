@@ -1,0 +1,96 @@
+local CORE_URL = "https://raw.githubusercontent.com/VoltexHub/UiLoader/refs/heads/main/Load"
+
+local ok, src = pcall(function()
+    return game:HttpGet(CORE_URL .. "?v=" .. os.time())
+end)
+if not ok or type(src) ~= "string" or src == "" then
+    warn("Failed to download core:", src)
+    return
+end
+
+local fn, err = loadstring(src)
+if not fn then
+    warn("Compile error:", err)
+    return
+end
+
+local VortexHub = fn()
+
+local function getLanguage()
+    local lang = nil
+
+    
+    pcall(function()
+        if type(VortexHub) == "table" and type(VortexHub.Language) == "string" then
+            lang = VortexHub.Language
+        end
+    end)
+
+    if not lang and type(isfile) == "function" and type(readfile) == "function" then
+        local candidates = {
+            "vortexhub_saves/language.json",
+            "vortexhub_saves/config.json",
+            "vortexhub_saves/settings.json"
+        }
+        for _, path in ipairs(candidates) do
+            if isfile(path) then
+                local content = readfile(path)
+                if type(content) == "string" then
+                    local matched = content:match('"Language"%s*:%s*"([^"]+)"') or content:match('"language"%s*:%s*"([^"]+)"')
+                    if matched then
+                        lang = matched
+                        break
+                    end
+                end
+            end
+        end
+    end
+
+
+    if not lang or lang == "" then
+        local playerLang = ""
+        pcall(function()
+            local player = game:GetService("Players").LocalPlayer
+            if player and type(player.LocaleId) == "string" and player.LocaleId ~= "" then
+                playerLang = player.LocaleId
+            end
+        end)
+        if playerLang == "" then
+            pcall(function()
+                playerLang = game:GetService("LocalizationService").RobloxLocaleId or ""
+            end)
+        end
+        lang = playerLang
+    end
+
+    lang = tostring(lang or ""):lower()
+    if lang == "ar" or lang:sub(1, 3) == "ar-" or lang:find("arabic", 1, true) then
+        return "ar"
+    end
+
+    
+    return "en"
+end
+
+local currentLang = getLanguage()
+
+local messages = {
+    ar = {
+        Title = "تنبيه",
+        Description = "اللعبة الحالية ليست مدعومة"
+    },
+    en = {
+        Title = "Notice",
+        Description = "The current game is not supported"
+    }
+}
+
+local msg = messages[currentLang] or messages.en
+
+VortexHub:Notify({
+    Title = msg.Title,
+    Description = msg.Description,
+    Duration = 3
+})
+
+return
