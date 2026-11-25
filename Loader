@@ -1,0 +1,80 @@
+local GAMES_URL = "https://raw.githubusercontent.com/VoltexHub/UiLoader/refs/heads/main/Games%20Scripts"
+
+local function fetch(url)
+    local ok, res = pcall(function()
+        return game:HttpGet(url, true)
+    end)
+    if not ok or type(res) ~= "string" or res == "" then
+        return nil
+    end
+    return res
+end
+
+local function findMatch(gamesList, targetId)
+    local target = tostring(targetId)
+    for _, entry in ipairs(gamesList) do
+        if type(entry) == "table" and type(entry.ids) == "table" and type(entry.url) == "string" then
+            for _, id in ipairs(entry.ids) do
+                if tostring(id) == target then
+                    return entry.url
+                end
+            end
+        end
+    end
+    return nil
+end
+
+local function getUniversal(gamesList)
+    for _, entry in ipairs(gamesList) do
+        if type(entry) == "table" and entry.universal == true and type(entry.url) == "string" then
+            return entry.url
+        end
+    end
+    return nil
+end
+
+local gamesSrc = fetch(GAMES_URL)
+if not gamesSrc then
+    warn("[Loader] Failed to fetch Games Scripts")
+    return
+end
+
+local gamesFn, gamesErr = loadstring(gamesSrc)
+if not gamesFn then
+    warn("[Loader] Compile error in Games Scripts:", gamesErr)
+    return
+end
+
+local okGames, Games = pcall(gamesFn)
+if not okGames or type(Games) ~= "table" then
+    warn("[Loader] Games table did not return a valid table")
+    return
+end
+
+local placeId = tostring(game.PlaceId)
+local gameId = tostring(game.GameId)
+
+local link = findMatch(Games, placeId)
+    or findMatch(Games, gameId)
+    or getUniversal(Games)
+
+if not link then
+    warn("[Loader] No script found for game. PlaceId:", placeId, "GameId:", gameId)
+    return
+end
+
+print("[Loader] PlaceId:", placeId, "| GameId:", gameId, "| Loading:", link)
+
+local scriptSrc = fetch(link)
+if not scriptSrc then
+    warn("[Loader] Failed to fetch game script from URL:", link)
+    return
+end
+
+local fn, err = loadstring(scriptSrc)
+if not fn then
+    warn("[Loader] Compile error in game script:", err)
+    return
+end
+
+fn()
