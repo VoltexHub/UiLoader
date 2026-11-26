@@ -1,7 +1,7 @@
 local Games = {
     {
-        ids = { "1863846367373" },
-        url = "https://raw.githubusercontent.com/VoltexHub/UiLoader/refs/heads/main/Game1"
+        ids = { "111475355188494" },
+        url = "https://raw.githubusercontent.com/VoltexHub/UiLoader/refs/heads/main/Murder%20Arena"
     },
     {
         ids = { "12355337193", "87333519612415", "15385224902" },
